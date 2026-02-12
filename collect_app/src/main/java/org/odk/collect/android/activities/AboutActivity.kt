@@ -18,6 +18,8 @@ package org.odk.collect.android.activities
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,8 +29,10 @@ import org.odk.collect.android.R
 import org.odk.collect.android.adapters.AboutItemClickListener
 import org.odk.collect.android.adapters.AboutListAdapter
 import org.odk.collect.android.injection.DaggerUtils
+import org.odk.collect.android.version.VersionInformation
 import org.odk.collect.androidshared.system.IntentLauncher
 import org.odk.collect.androidshared.ui.multiclicksafe.MultiClickGuard.allowClick
+import org.odk.collect.strings.R.string
 import org.odk.collect.strings.localization.LocalizedActivity
 import org.odk.collect.webpage.ExternalWebPageHelper
 import javax.inject.Inject
@@ -42,11 +46,15 @@ class AboutActivity : LocalizedActivity(), AboutItemClickListener {
     @Inject
     lateinit var intentLauncher: IntentLauncher
 
+    @Inject
+    lateinit var versionInformation: VersionInformation
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.about_layout)
         DaggerUtils.getComponent(this).inject(this)
         initToolbar()
+        initVersionInfo()
 
         findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(this@AboutActivity)
@@ -56,6 +64,40 @@ class AboutActivity : LocalizedActivity(), AboutItemClickListener {
 
         websiteUri = Uri.parse(getString(org.odk.collect.strings.R.string.app_url))
         forumUri = Uri.parse(getString(org.odk.collect.strings.R.string.forum_url))
+    }
+
+    private fun initVersionInfo() {
+        findViewById<TextView>(R.id.about_app_version).text = String.format(
+            "%s %s",
+            getString(string.collect_app_name),
+            versionInformation.versionToDisplay
+        )
+        val commitDescription = buildCommitDescription()
+        val versionShaView = findViewById<TextView>(R.id.about_version_sha)
+        if (commitDescription != null) {
+            versionShaView.text = commitDescription
+            versionShaView.visibility = View.VISIBLE
+        } else {
+            versionShaView.visibility = View.GONE
+        }
+    }
+
+    private fun buildCommitDescription(): String? {
+        var commitDescription = ""
+        versionInformation.commitCount?.let {
+            commitDescription = appendToCommitDescription(commitDescription, it.toString())
+        }
+        versionInformation.commitSHA?.let {
+            commitDescription = appendToCommitDescription(commitDescription, it)
+        }
+        if (versionInformation.isDirty) {
+            commitDescription = appendToCommitDescription(commitDescription, "dirty")
+        }
+        return if (commitDescription.isNotEmpty()) commitDescription else null
+    }
+
+    private fun appendToCommitDescription(commitDescription: String, suffix: String): String {
+        return if (commitDescription.isEmpty()) suffix else "$commitDescription-$suffix"
     }
 
     private fun initToolbar() {

@@ -7,8 +7,10 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -23,7 +25,6 @@ import org.odk.collect.android.formentry.FormOpeningMode
 import org.odk.collect.android.formlists.blankformlist.BlankFormListActivity
 import org.odk.collect.android.formmanagement.FormFillingIntentFactory
 import org.odk.collect.android.instancemanagement.send.InstanceUploaderListActivity
-import org.odk.collect.android.projects.ProjectIconView
 import org.odk.collect.android.projects.ProjectSettingsDialog
 import org.odk.collect.android.utilities.ActionRegister
 import org.odk.collect.androidshared.data.consume
@@ -71,7 +72,6 @@ class MainMenuFragment(
         currentProjectViewModel.currentProject.observe(viewLifecycleOwner) { project ->
             if (project != null) {
                 requireActivity().invalidateOptionsMenu()
-                requireActivity().title = project.name
             }
         }
 
@@ -79,7 +79,6 @@ class MainMenuFragment(
         initToolbar(binding)
         initMapbox()
         initButtons(binding)
-        initAppName(binding)
 
         if (permissionsViewModel.shouldAskForPermissions()) {
             DialogFragmentUtils.showIfNotShowing(
@@ -131,11 +130,7 @@ class MainMenuFragment(
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         val projectsMenuItem = menu.findItem(org.odk.collect.android.R.id.projects)
-        (projectsMenuItem.actionView as ProjectIconView).apply {
-            project = currentProjectViewModel.currentProject.value
-            setOnClickListener { onOptionsItemSelected(projectsMenuItem) }
-            contentDescription = getString(string.projects)
-        }
+        projectsMenuItem.actionView?.setOnClickListener { onOptionsItemSelected(projectsMenuItem) }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -159,7 +154,29 @@ class MainMenuFragment(
 
     private fun initToolbar(binding: MainMenuBinding) {
         val toolbar = binding.root.findViewById<Toolbar>(org.odk.collect.androidshared.R.id.toolbar)
-        (requireActivity() as AppCompatActivity).setSupportActionBar(toolbar)
+        (requireActivity() as AppCompatActivity).apply {
+            setSupportActionBar(toolbar)
+            title = "" // Prevent activity label (e.g. app name) from showing in toolbar
+        }
+        toolbar.title = ""
+        toolbar.setContentInsetStartWithNavigation(0)
+        (requireActivity() as AppCompatActivity).supportActionBar?.setDisplayShowTitleEnabled(false)
+        // Use custom ImageView instead of setLogo() so we can position it flush left (no internal Toolbar padding)
+        val logoView = ImageView(requireContext()).apply {
+            setImageResource(org.odk.collect.android.R.drawable.mti_logo)
+            adjustViewBounds = true
+            maxHeight = resources.getDimensionPixelSize(android.R.dimen.app_icon_size)
+            contentDescription = getString(string.collect_app_name)
+        }
+        val logoParams = Toolbar.LayoutParams(
+            Toolbar.LayoutParams.WRAP_CONTENT,
+            Toolbar.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            marginStart = 0
+            leftMargin = 0
+        }
+        toolbar.addView(logoView, 0, logoParams)
     }
 
     private fun initMapbox() {
@@ -231,21 +248,6 @@ class MainMenuFragment(
         }
         mainMenuViewModel.sentInstancesCount.observe(viewLifecycleOwner) { sent: Int ->
             binding.viewSentForms.setNumberOfForms(sent)
-        }
-    }
-
-    private fun initAppName(binding: MainMenuBinding) {
-        binding.appName.text = String.format(
-            "%s %s",
-            getString(string.collect_app_name),
-            mainMenuViewModel.version
-        )
-
-        val versionSHA = mainMenuViewModel.versionCommitDescription
-        if (versionSHA != null) {
-            binding.versionSha.text = versionSHA
-        } else {
-            binding.versionSha.visibility = View.GONE
         }
     }
 

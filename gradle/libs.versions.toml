@@ -16,7 +16,7 @@ kotlin = "2.2.0"
 [libraries]
 firebaseCrashlyticsGradle = { group = "com.google.firebase", name = "firebase-crashlytics-gradle", version = "3.0.4" }
 googleServices = { group = "com.google.gms", name = "google-services", version = "4.4.3" }
-gradle = { group = "com.android.tools.build", name = "gradle", version = "8.11.0" }
+gradle = { group = "com.android.tools.build", name = "gradle", version = "8.13.2" }
 kotlinGradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 navigationSafeArgsGradlePlugin = { group = "androidx.navigation", name = "navigation-safe-args-gradle-plugin", version.ref = "navigation" }
 ktlintGradle = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version = "12.3.0" }

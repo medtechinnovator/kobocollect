@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/app_bar_layout"/>
+    <include layout="@layout/app_bar_layout_main_menu"/>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -96,30 +96,6 @@
                 app:layout_constraintStart_toStartOf="@id/enter_data"
                 app:layout_constraintTop_toBottomOf="@id/get_forms"
                 app:name="@string/manage_files" />
-
-            <TextView
-                android:id="@+id/app_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:textAppearance="?textAppearanceBody1"
-                android:textColor="@color/color_on_surface_medium_emphasis"
-                android:layout_marginTop="@dimen/margin_standard"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/manage_forms"
-                tools:text="KoboCollect v2022.3" />
-
-            <TextView
-                android:id="@+id/version_sha"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:textAppearance="?textAppearanceCaption"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/app_name"
-                tools:text="commit sha" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

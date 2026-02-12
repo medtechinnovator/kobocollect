@@ -10,7 +10,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.core.AllOf.allOf;
-import static org.hamcrest.core.StringContains.containsString;
 
 import org.odk.collect.android.R;
 import org.odk.collect.android.support.StorageUtils;
@@ -26,7 +25,7 @@ public class MainMenuPage extends Page<MainMenuPage> {
     public MainMenuPage assertOnPage() {
         return WaitFor.waitFor(() -> {
             onView(withText(org.odk.collect.strings.R.string.enter_data)).check(matches(isDisplayed()));
-            onView(withText(containsString(getTranslatedString(org.odk.collect.strings.R.string.collect_app_name)))).perform(scrollTo()).check(matches(isDisplayed()));
+            onView(withText(getTranslatedString(org.odk.collect.strings.R.string.manage_files))).perform(scrollTo()).check(matches(isDisplayed()));
             return this;
         });
     }
