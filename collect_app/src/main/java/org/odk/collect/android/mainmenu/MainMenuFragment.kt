@@ -8,9 +8,14 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.Gravity
+import android.graphics.Paint
+import android.text.InputFilter
+import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -31,14 +36,23 @@ import org.odk.collect.androidshared.data.consume
 import org.odk.collect.androidshared.ui.DialogFragmentUtils
 import org.odk.collect.androidshared.ui.SnackbarUtils
 import org.odk.collect.androidshared.ui.multiclicksafe.MultiClickGuard
+import org.odk.collect.metadata.PropertyManager
 import org.odk.collect.settings.SettingsProvider
+import org.odk.collect.settings.keys.ProjectKeys
 import org.odk.collect.strings.R.string
 import org.odk.collect.webpage.WebViewActivity
+import org.odk.collect.androidshared.ui.ToastUtils
 
 class MainMenuFragment(
     private val viewModelFactory: ViewModelProvider.Factory,
-    private val settingsProvider: SettingsProvider
+    private val settingsProvider: SettingsProvider,
+    private val propertyManager: PropertyManager
 ) : Fragment() {
+
+    companion object {
+        /** Hardcoded 4-digit PIN required to update username from the homepage. */
+        private const val USERNAME_EDIT_PIN = "9876"
+    }
 
     private lateinit var mainMenuViewModel: MainMenuViewModel
     private lateinit var currentProjectViewModel: CurrentProjectViewModel
@@ -79,6 +93,7 @@ class MainMenuFragment(
         initToolbar(binding)
         initMapbox()
         initButtons(binding)
+        initUserIdentity(binding)
 
         if (permissionsViewModel.shouldAskForPermissions()) {
             DialogFragmentUtils.showIfNotShowing(
@@ -126,6 +141,7 @@ class MainMenuFragment(
 
         val binding = MainMenuBinding.bind(requireView())
         setButtonsVisibility(binding)
+        refreshUserIdentityDisplay(binding)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
@@ -177,6 +193,85 @@ class MainMenuFragment(
             leftMargin = 0
         }
         toolbar.addView(logoView, 0, logoParams)
+    }
+
+    private fun initUserIdentity(binding: MainMenuBinding) {
+        val valueView = binding.userIdentitySection.userIdentityValue
+        valueView.paintFlags = valueView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+        refreshUserIdentityDisplay(binding)
+
+        valueView.setOnClickListener {
+            showPinDialog(valueView)
+        }
+    }
+
+    private fun showPinDialog(valueView: TextView) {
+        val pinInput = EditText(requireContext()).apply {
+            hint = getString(org.odk.collect.strings.R.string.main_menu_pin_hint)
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            setSingleLine(true)
+            filters = arrayOf(InputFilter.LengthFilter(4))
+            setPadding(
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small)
+            )
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle(org.odk.collect.strings.R.string.main_menu_pin_title)
+            .setView(pinInput)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val entered = pinInput.text.toString()
+                if (entered == USERNAME_EDIT_PIN) {
+                    showEditUsernameDialog(valueView)
+                } else {
+                    ToastUtils.showShortToast(org.odk.collect.strings.R.string.main_menu_pin_incorrect)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun refreshUserIdentityDisplay(binding: MainMenuBinding) {
+        val valueView = binding.userIdentitySection.userIdentityValue
+        val username = settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_METADATA_USERNAME)
+            ?: ""
+        val fallback = settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_USERNAME)
+        val display = when {
+            username.isNotBlank() -> username
+            !fallback.isNullOrBlank() -> fallback
+            else -> getString(org.odk.collect.strings.R.string.main_menu_user_not_set)
+        }
+        valueView.text = display
+    }
+
+    private fun showEditUsernameDialog(valueView: TextView) {
+        val current = settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_METADATA_USERNAME)
+            ?: settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_USERNAME)
+            ?: ""
+        val input = EditText(requireContext()).apply {
+            setText(current)
+            hint = getString(string.username)
+            setSingleLine(true)
+            setPadding(
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
+                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small)
+            )
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle(org.odk.collect.strings.R.string.main_menu_edit_username_title)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val newValue = input.text.toString().trim()
+                settingsProvider.getUnprotectedSettings().save(ProjectKeys.KEY_METADATA_USERNAME, newValue)
+                propertyManager.reload()
+                valueView.text = if (newValue.isNotBlank()) newValue else getString(org.odk.collect.strings.R.string.main_menu_user_not_set)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun initMapbox() {

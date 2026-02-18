@@ -36,6 +36,16 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/map_box_initialization_fragment" />
 
+            <include
+                android:id="@+id/user_identity_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_extra_small"
+                layout="@layout/main_menu_user_identity"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/google_drive_deprecation_banner" />
+
             <org.odk.collect.android.mainmenu.StartNewFormButton
                 android:id="@+id/enter_data"
                 android:layout_width="0dp"
@@ -44,7 +54,7 @@
                 app:layout_constraintWidth_max="@dimen/max_content_width"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/google_drive_deprecation_banner" />
+                app:layout_constraintTop_toBottomOf="@id/user_identity_section" />
 
             <org.odk.collect.android.mainmenu.MainMenuButton
                 android:id="@+id/review_data"

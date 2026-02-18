@@ -954,6 +954,14 @@
     <string name="analytics">Collect anonymous usage data</string>
     <string name="analytics_summary">Anonymous usage data helps the KoboToolbox team prioritize fixes and features.</string>
 
+    <string name="main_menu_current_user">Current user</string>
+    <string name="main_menu_user_label">User:</string>
+    <string name="main_menu_user_not_set">Not set — tap to set username</string>
+    <string name="main_menu_edit_user">Edit username</string>
+    <string name="main_menu_pin_title">Enter PIN</string>
+    <string name="main_menu_pin_hint">4-digit PIN</string>
+    <string name="main_menu_pin_incorrect">Incorrect PIN</string>
+    <string name="main_menu_edit_username_title">Username</string>
     <string name="form_metadata_title">Form Metadata</string>
     <string name="form_metadata">Form metadata</string>
     <string name="form_metadata_summary">These values will be added to forms that have username, email and/or telephone preloaded fields to identify the person submitting data.</string>

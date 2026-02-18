@@ -14,6 +14,7 @@ import org.odk.collect.android.projects.ProjectSettingsDialog
 import org.odk.collect.android.utilities.ThemeUtils
 import org.odk.collect.androidshared.ui.FragmentFactoryBuilder
 import org.odk.collect.crashhandler.CrashHandler
+import org.odk.collect.metadata.PropertyManager
 import org.odk.collect.mobiledevicemanagement.MDMConfigObserver
 import org.odk.collect.permissions.PermissionsProvider
 import org.odk.collect.settings.SettingsProvider
@@ -27,6 +28,9 @@ class MainMenuActivity : LocalizedActivity(), CollectComposeThemeProvider {
 
     @Inject
     lateinit var settingsProvider: SettingsProvider
+
+    @Inject
+    lateinit var propertyManager: PropertyManager
 
     @Inject
     lateinit var permissionsProvider: PermissionsProvider
@@ -80,7 +84,7 @@ class MainMenuActivity : LocalizedActivity(), CollectComposeThemeProvider {
                     ProjectSettingsDialog(viewModelFactory)
                 }
                 .forClass(MainMenuFragment::class) {
-                    MainMenuFragment(viewModelFactory, settingsProvider)
+                    MainMenuFragment(viewModelFactory, settingsProvider, propertyManager)
                 }
                 .build()
 
