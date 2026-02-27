@@ -103,7 +103,12 @@ android {
         }
 
         selfSignedRelease {
-            storeFile file('../debug.keystore')
+            // Use project keystore if present, otherwise the default Android debug keystore (~/.android/debug.keystore)
+            def debugKeystore = file("$rootDir/debug.keystore")
+            if (!debugKeystore.exists()) {
+                debugKeystore = file("${System.getProperty('user.home')}/.android/debug.keystore")
+            }
+            storeFile debugKeystore
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
