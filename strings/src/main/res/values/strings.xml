@@ -962,6 +962,8 @@
     <string name="main_menu_pin_hint">4-digit PIN</string>
     <string name="main_menu_pin_incorrect">Incorrect PIN</string>
     <string name="main_menu_edit_username_title">Username</string>
+    <string name="main_menu_judges_load_error">Could not load judges</string>
+    <string name="main_menu_judges_loading">Loading judges…</string>
     <string name="form_metadata_title">Form Metadata</string>
     <string name="form_metadata">Form metadata</string>
     <string name="form_metadata_summary">These values will be added to forms that have username, email and/or telephone preloaded fields to identify the person submitting data.</string>

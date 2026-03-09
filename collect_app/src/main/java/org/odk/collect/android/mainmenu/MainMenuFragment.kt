@@ -13,8 +13,11 @@ import android.text.InputFilter
 import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ListView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +33,7 @@ import org.odk.collect.android.formentry.FormOpeningMode
 import org.odk.collect.android.formlists.blankformlist.BlankFormListActivity
 import org.odk.collect.android.formmanagement.FormFillingIntentFactory
 import org.odk.collect.android.instancemanagement.send.InstanceUploaderListActivity
+import org.odk.collect.android.BuildConfig
 import org.odk.collect.android.projects.ProjectSettingsDialog
 import org.odk.collect.android.utilities.ActionRegister
 import org.odk.collect.androidshared.data.consume
@@ -42,6 +46,7 @@ import org.odk.collect.settings.keys.ProjectKeys
 import org.odk.collect.strings.R.string
 import org.odk.collect.webpage.WebViewActivity
 import org.odk.collect.androidshared.ui.ToastUtils
+import timber.log.Timber
 
 class MainMenuFragment(
     private val viewModelFactory: ViewModelProvider.Factory,
@@ -250,22 +255,53 @@ class MainMenuFragment(
         val current = settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_METADATA_USERNAME)
             ?: settingsProvider.getUnprotectedSettings().getString(ProjectKeys.KEY_USERNAME)
             ?: ""
-        val input = EditText(requireContext()).apply {
-            setText(current)
-            hint = getString(string.username)
-            setSingleLine(true)
-            setPadding(
-                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
-                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small),
-                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_standard),
-                resources.getDimensionPixelSize(org.odk.collect.androidshared.R.dimen.margin_small)
-            )
+        val dialogView = layoutInflater.inflate(org.odk.collect.android.R.layout.dialog_username_autocomplete, null)
+        val usernameEdit = dialogView.findViewById<EditText>(org.odk.collect.android.R.id.username_edit)
+        val userList = dialogView.findViewById<ListView>(org.odk.collect.android.R.id.username_user_list)
+        val loadingView = dialogView.findViewById<View>(org.odk.collect.android.R.id.username_loading)
+        val adapter = UserSearchAdapter(requireContext())
+        userList.adapter = adapter
+        usernameEdit.setText(current)
+        usernameEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                adapter.filter.filter(s?.toString())
+            }
+        })
+        userList.setOnItemClickListener { _, _, position, _ ->
+            val judge = adapter.getItem(position)
+            usernameEdit.setText(judge.cleanName)
         }
+        val baseApi = BuildConfig.MTI_BASE_API
+        val apiKey = BuildConfig.MTI_APP_API_KEY
+        Timber.tag("MainMenuFragment").d("Username dialog opened: MTI_BASE_API blank=%s, MTI_APP_API_KEY blank=%s", baseApi.isBlank(), apiKey.isBlank())
+        if (baseApi.isNotBlank() && apiKey.isNotBlank()) {
+            loadingView.visibility = View.VISIBLE
+            Timber.tag("MainMenuFragment").d("Calling MtiJudgesApi.fetchJudges with baseUrl=%s", baseApi)
+            val api = MtiJudgesApi(baseApi, apiKey)
+            api.fetchJudges(
+                onSuccess = { judges ->
+                    loadingView.visibility = View.GONE
+                    Timber.tag("MainMenuFragment").d("fetchJudges success: %d judges", judges.size)
+                    adapter.setJudges(judges)
+                    adapter.filter.filter("")
+                },
+                onError = { t ->
+                    loadingView.visibility = View.GONE
+                    Timber.tag("MainMenuFragment").e(t, "fetchJudges error")
+                    ToastUtils.showShortToast(org.odk.collect.strings.R.string.main_menu_judges_load_error)
+                }
+            )
+        } else {
+            Timber.tag("MainMenuFragment").w("Skipping judges fetch: MTI_BASE_API or MTI_APP_API_KEY is empty (check secrets.properties and rebuild)")
+        }
+        adapter.filter.filter("")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setTitle(org.odk.collect.strings.R.string.main_menu_edit_username_title)
-            .setView(input)
+            .setView(dialogView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                val newValue = input.text.toString().trim()
+                val newValue = usernameEdit.text.toString().trim()
                 settingsProvider.getUnprotectedSettings().save(ProjectKeys.KEY_METADATA_USERNAME, newValue)
                 propertyManager.reload()
                 valueView.text = if (newValue.isNotBlank()) newValue else getString(org.odk.collect.strings.R.string.main_menu_user_not_set)
