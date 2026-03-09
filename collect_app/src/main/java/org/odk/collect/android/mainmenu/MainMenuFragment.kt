@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ListView
@@ -266,12 +267,14 @@ class MainMenuFragment(
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                adapter.filter.filter(s?.toString())
+                val text = s?.toString() ?: ""
+                Log.d("MainMenuFragment", "Username keystroke: filtering judges by \"$text\"")
+                adapter.filterBy(text)
             }
         })
         userList.setOnItemClickListener { _, _, position, _ ->
             val judge = adapter.getItem(position)
-            usernameEdit.setText(judge.cleanName)
+            usernameEdit.setText(judge.safeCleanName)
         }
         val baseApi = BuildConfig.MTI_BASE_API
         val apiKey = BuildConfig.MTI_APP_API_KEY
@@ -285,7 +288,7 @@ class MainMenuFragment(
                     loadingView.visibility = View.GONE
                     Timber.tag("MainMenuFragment").d("fetchJudges success: %d judges", judges.size)
                     adapter.setJudges(judges)
-                    adapter.filter.filter("")
+                    adapter.filterBy("")
                 },
                 onError = { t ->
                     loadingView.visibility = View.GONE
@@ -296,7 +299,7 @@ class MainMenuFragment(
         } else {
             Timber.tag("MainMenuFragment").w("Skipping judges fetch: MTI_BASE_API or MTI_APP_API_KEY is empty (check secrets.properties and rebuild)")
         }
-        adapter.filter.filter("")
+        adapter.filterBy("")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setTitle(org.odk.collect.strings.R.string.main_menu_edit_username_title)
             .setView(dialogView)

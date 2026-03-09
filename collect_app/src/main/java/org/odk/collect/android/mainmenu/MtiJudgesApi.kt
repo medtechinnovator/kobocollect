@@ -15,10 +15,10 @@ import java.util.concurrent.Executors
  */
 data class Judge(
     val id: Int,
-    @SerializedName("firstName") val firstName: String,
-    @SerializedName("lastName") val lastName: String,
-    val email: String,
-    @SerializedName("cleanName") val cleanName: String,
+    @SerializedName("firstName") val firstName: String? = null,
+    @SerializedName("lastName") val lastName: String? = null,
+    val email: String? = null,
+    @SerializedName("cleanName") val cleanName: String? = null,
     val role: String? = null,
     val phoneNumber: String? = null,
     val company: JudgeCompany? = null,
@@ -26,7 +26,9 @@ data class Judge(
     @SerializedName("userLists") val userLists: List<UserListEntry>? = null,
     val notes: List<Any>? = null
 ) {
-    val displayName: String get() = "$firstName $lastName"
+    val displayName: String get() = "${firstName.orEmpty()} ${lastName.orEmpty()}".trim()
+    val safeCleanName: String get() = cleanName.orEmpty()
+    val safeEmail: String get() = email.orEmpty()
 }
 
 data class JudgeCompany(

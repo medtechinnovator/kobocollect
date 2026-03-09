@@ -1,23 +1,22 @@
 package org.odk.collect.android.mainmenu
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.Filter
-import android.widget.Filterable
 import android.widget.TextView
 import org.odk.collect.android.R
 
 /**
- * Filterable adapter for the username dropdown. Shows "FirstName LastName", then cleanName, then email.
- * Sorted alphabetically by display name. Filters by any match in first name, last name, email, or cleanName.
+ * Adapter for the username dropdown. Shows "FirstName LastName", then cleanName, then email.
+ * Filtering is client-side only: refilter on each keystroke by firstName, lastName, or cleanName.
  */
 class UserSearchAdapter(
     context: Context,
     initialJudges: List<Judge> = emptyList()
-) : ArrayAdapter<Judge>(context, R.layout.dropdown_item_user, initialJudges), Filterable {
+) : ArrayAdapter<Judge>(context, R.layout.dropdown_item_user, initialJudges) {
 
     private var judges: List<Judge> = initialJudges
     private var filteredJudges: List<Judge> = initialJudges
@@ -33,43 +32,39 @@ class UserSearchAdapter(
         val view = convertView ?: inflater.inflate(R.layout.dropdown_item_user, parent, false)
         val judge = getItem(position)
         view.findViewById<TextView>(R.id.user_dropdown_name).text = judge.displayName
-        view.findViewById<TextView>(R.id.user_dropdown_secondary).text = judge.cleanName
-        view.findViewById<TextView>(R.id.user_dropdown_email).text = judge.email
+        view.findViewById<TextView>(R.id.user_dropdown_secondary).text = judge.safeCleanName
+        view.findViewById<TextView>(R.id.user_dropdown_email).text = judge.safeEmail
         return view
     }
 
-    override fun getFilter(): Filter = object : Filter() {
-        override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val query = constraint?.toString()?.trim()?.lowercase() ?: ""
-            val result = if (query.isEmpty()) {
-                judges
-            } else {
-                judges.filter { judge ->
-                    judge.firstName.lowercase().contains(query) ||
-                        judge.lastName.lowercase().contains(query) ||
-                        judge.email.lowercase().contains(query) ||
-                        judge.displayName.lowercase().contains(query) ||
-                        judge.cleanName.lowercase().contains(query)
-                }
-            }
-            val sorted = result.sortedBy { it.displayName.lowercase() }
-            return FilterResults().apply {
-                values = sorted
-                count = sorted.size
-            }
+    /**
+     * Refilter the list on each keystroke. Match on first name, last name, or clean name (case-insensitive).
+     * Call from the username field's TextWatcher.
+     */
+    fun filterBy(query: CharSequence?) {
+        val q = query?.toString()?.trim()?.lowercase() ?: ""
+        filteredJudges = if (q.isEmpty()) {
+            judges
+        } else {
+            judges.filter { judge ->
+                (judge.firstName.orEmpty().lowercase().contains(q)) ||
+                    (judge.lastName.orEmpty().lowercase().contains(q)) ||
+                    (judge.cleanName.orEmpty().lowercase().contains(q))
+            }.sortedBy { it.displayName.lowercase() }
         }
-
-        @Suppress("UNCHECKED_CAST")
-        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-            filteredJudges = (results?.values as? List<Judge>) ?: emptyList()
-            notifyDataSetChanged()
-        }
+        Log.d(TAG, "Judge filter triggered: query=\"$q\" | fullList=${judges.size} | showing ${filteredJudges.size} judges")
+        notifyDataSetChanged()
     }
 
-    /** Replaces the backing list (e.g. after loading from API). Sorts alphabetically by display name. */
+    /** Replaces the full judges list (e.g. after loading from API). Call filterBy("") after to show all. */
     fun setJudges(newJudges: List<Judge>) {
         judges = newJudges.sortedBy { it.displayName.lowercase() }
         filteredJudges = judges
+        Log.d(TAG, "setJudges: ${judges.size} judges loaded (client-side, filter on each keystroke)")
         notifyDataSetChanged()
+    }
+
+    private companion object {
+        const val TAG = "UserSearchAdapter"
     }
 }
