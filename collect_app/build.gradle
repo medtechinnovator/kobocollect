@@ -84,7 +84,7 @@ android {
     }
 
     defaultConfig {
-        applicationId('org.koboc.collect.android')
+        applicationId('innovator.forms')
         minSdk libs.versions.minSdk.get().toInteger()
         targetSdkVersion libs.versions.targetSdk.get().toInteger()
         versionCode 4150
