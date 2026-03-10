@@ -139,6 +139,26 @@ class MainMenuFragment(
                 binding.googleDriveDeprecationBanner.root.visibility = View.GONE
             }
         }
+
+        preloadJudgesIfNeeded()
+    }
+
+    /** Load judges in the background when main menu is shown so the judge picker opens instantly. */
+    private fun preloadJudgesIfNeeded() {
+        val baseApi = BuildConfig.MTI_BASE_API
+        val apiKey = BuildConfig.MTI_APP_API_KEY
+        if (baseApi.isBlank() || apiKey.isBlank()) return
+        if (JudgesCache.get() != null) return
+        val api = MtiJudgesApi(baseApi, apiKey)
+        api.fetchJudges(
+            onSuccess = { judges ->
+                JudgesCache.set(judges)
+                Timber.tag("MainMenuFragment").d("Preloaded %d judges for picker", judges.size)
+            },
+            onError = { t ->
+                Timber.tag("MainMenuFragment").e(t, "Preload judges failed (picker will fetch when opened)")
+            }
+        )
     }
 
     override fun onResume() {
@@ -278,14 +298,19 @@ class MainMenuFragment(
         }
         val baseApi = BuildConfig.MTI_BASE_API
         val apiKey = BuildConfig.MTI_APP_API_KEY
-        Timber.tag("MainMenuFragment").d("Username dialog opened: MTI_BASE_API blank=%s, MTI_APP_API_KEY blank=%s", baseApi.isBlank(), apiKey.isBlank())
-        if (baseApi.isNotBlank() && apiKey.isNotBlank()) {
+        val cached = JudgesCache.get()
+        if (cached != null) {
+            adapter.setJudges(cached)
+            adapter.filterBy("")
+            Timber.tag("MainMenuFragment").d("Username dialog: using %d cached judges", cached.size)
+        } else if (baseApi.isNotBlank() && apiKey.isNotBlank()) {
             loadingView.visibility = View.VISIBLE
             Timber.tag("MainMenuFragment").d("Calling MtiJudgesApi.fetchJudges with baseUrl=%s", baseApi)
             val api = MtiJudgesApi(baseApi, apiKey)
             api.fetchJudges(
                 onSuccess = { judges ->
                     loadingView.visibility = View.GONE
+                    JudgesCache.set(judges)
                     Timber.tag("MainMenuFragment").d("fetchJudges success: %d judges", judges.size)
                     adapter.setJudges(judges)
                     adapter.filterBy("")
