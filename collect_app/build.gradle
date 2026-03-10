@@ -91,7 +91,7 @@ android {
         versionName getVersionName()
         testInstrumentationRunner('androidx.test.runner.AndroidJUnitRunner')
         vectorDrawables.useSupportLibrary = true
-        archivesBaseName = 'Innovetor-Forms'
+        archivesBaseName = 'Innovator-Forms'
         buildConfigField("String", "MTI_BASE_API", "\"$mtiBaseApi\"")
         buildConfigField("String", "MTI_APP_API_KEY", "\"$mtiAppApiKey\"")
     }

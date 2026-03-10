@@ -2,7 +2,7 @@
   "name": "medtechinnovator-kobocollect",
   "private": true,
   "scripts": {
-    "build:apk": "./gradlew :collect_app:assembleSelfSignedRelease",
+    "build:apk": "./build-apk-for-team.sh",
     "build:debug": "./gradlew :collect_app:assembleDebug",
     "build:release": "./gradlew :collect_app:assembleRelease"
   }
