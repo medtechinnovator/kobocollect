@@ -302,10 +302,14 @@ class MainMenuFragment(
         if (cached != null) {
             adapter.setJudges(cached)
             adapter.filterBy("")
-            Timber.tag("MainMenuFragment").d("Username dialog: using %d cached judges", cached.size)
-        } else if (baseApi.isNotBlank() && apiKey.isNotBlank()) {
+            Timber.tag("MainMenuFragment").d("Username dialog: showing %d cached judges, refetching for latest", cached.size)
+        } else if (baseApi.isBlank() || apiKey.isBlank()) {
+            Timber.tag("MainMenuFragment").w("Skipping judges fetch: MTI_BASE_API or MTI_APP_API_KEY is empty (check secrets.properties and rebuild)")
+        } else {
             loadingView.visibility = View.VISIBLE
-            Timber.tag("MainMenuFragment").d("Calling MtiJudgesApi.fetchJudges with baseUrl=%s", baseApi)
+        }
+        // Always refetch when picker opens so new judges added on the spot are visible (not stuck on initial cache)
+        if (baseApi.isNotBlank() && apiKey.isNotBlank()) {
             val api = MtiJudgesApi(baseApi, apiKey)
             api.fetchJudges(
                 onSuccess = { judges ->
@@ -321,8 +325,6 @@ class MainMenuFragment(
                     ToastUtils.showShortToast(org.odk.collect.strings.R.string.main_menu_judges_load_error)
                 }
             )
-        } else {
-            Timber.tag("MainMenuFragment").w("Skipping judges fetch: MTI_BASE_API or MTI_APP_API_KEY is empty (check secrets.properties and rebuild)")
         }
         adapter.filterBy("")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())

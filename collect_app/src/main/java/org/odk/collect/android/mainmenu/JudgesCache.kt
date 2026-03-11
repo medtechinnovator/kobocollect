@@ -1,8 +1,8 @@
 package org.odk.collect.android.mainmenu
 
 /**
- * In-memory cache for the judges list. Populated when the main menu loads so the judge picker
- * can show the list immediately when opened (no loading spinner).
+ * In-memory cache for the judges list. Populated when the main menu loads and refreshed every
+ * time the judge picker is opened, so new judges added on the spot are visible without restarting the app.
  */
 object JudgesCache {
     @Volatile
