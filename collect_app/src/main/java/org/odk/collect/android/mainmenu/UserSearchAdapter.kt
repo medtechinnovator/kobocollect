@@ -11,7 +11,7 @@ import org.odk.collect.android.R
 
 /**
  * Adapter for the username dropdown. Shows "FirstName LastName", then cleanName, then email.
- * Filtering is client-side only: refilter on each keystroke by firstName, lastName, or cleanName.
+ * Filtering is client-side only: refilter on each keystroke by full name (First + Last) or cleanName.
  */
 class UserSearchAdapter(
     context: Context,
@@ -38,7 +38,7 @@ class UserSearchAdapter(
     }
 
     /**
-     * Refilter the list on each keystroke. Match on first name, last name, or clean name (case-insensitive).
+     * Refilter the list on each keystroke. Match on full name (First + Last, with space) or clean name (case-insensitive).
      * Call from the username field's TextWatcher.
      */
     fun filterBy(query: CharSequence?) {
@@ -47,9 +47,8 @@ class UserSearchAdapter(
             judges
         } else {
             judges.filter { judge ->
-                (judge.firstName.orEmpty().lowercase().contains(q)) ||
-                    (judge.lastName.orEmpty().lowercase().contains(q)) ||
-                    (judge.cleanName.orEmpty().lowercase().contains(q))
+                judge.displayName.lowercase().contains(q) ||
+                    judge.cleanName.orEmpty().lowercase().contains(q)
             }.sortedBy { it.displayName.lowercase() }
         }
         Log.d(TAG, "Judge filter triggered: query=\"$q\" | fullList=${judges.size} | showing ${filteredJudges.size} judges")

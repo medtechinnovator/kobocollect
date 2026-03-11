@@ -57,7 +57,7 @@ class MainMenuFragment(
 
     companion object {
         /** Hardcoded 4-digit PIN required to update username from the homepage. */
-        private const val USERNAME_EDIT_PIN = "9876"
+        private const val USERNAME_EDIT_PIN = "9999"
     }
 
     private lateinit var mainMenuViewModel: MainMenuViewModel
